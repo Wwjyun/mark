@@ -1,4 +1,6 @@
 build/
 dist/
 __pycache__/
-YOLOXAnnotator.spec
+*.spec
+annotator_config.json
+*.pyc
