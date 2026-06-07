@@ -82,6 +82,7 @@ class AnnotatorView(QGraphicsView):
         self._temp_rect: Optional[QGraphicsRectItem] = None
         self._panning = False
         self._pan_start = None
+        self._space_held = False
 
     def wheelEvent(self, event):
         factor = 1.15 if event.angleDelta().y() > 0 else 1 / 1.15
@@ -90,7 +91,7 @@ class AnnotatorView(QGraphicsView):
     def mousePressEvent(self, event):
         mw = self.main_window
         if event.button() == Qt.MiddleButton or (
-            event.button() == Qt.LeftButton and event.modifiers() & Qt.SpaceModifier
+            event.button() == Qt.LeftButton and self._space_held
         ):
             self._panning = True
             self._pan_start = event.pos()
@@ -152,3 +153,15 @@ class AnnotatorView(QGraphicsView):
             self._start_scene_pos = None
             return
         super().mouseReleaseEvent(event)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Space and not event.isAutoRepeat():
+            self._space_held = True
+            self.setCursor(Qt.OpenHandCursor)
+        super().keyPressEvent(event)
+
+    def keyReleaseEvent(self, event):
+        if event.key() == Qt.Key_Space and not event.isAutoRepeat():
+            self._space_held = False
+            self.setCursor(Qt.ArrowCursor)
+        super().keyReleaseEvent(event)

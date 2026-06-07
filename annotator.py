@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 
 from PySide6.QtCore import Qt, QRectF, QPointF
-from PySide6.QtGui import QAction, QImage, QPixmap
+from PySide6.QtGui import QAction
 from PySide6.QtWidgets import (
     QComboBox,
     QFileDialog,
@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 from config import AppConfig
 from coco_io import export_coco, import_coco
 from graphics import AnnotatorView, BBoxRectItem
+from image_loader import load_image
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
 _UNDO_LIMIT = 50
@@ -220,17 +221,18 @@ class YOLOXCOCOAnnotator(QMainWindow):
         self.current_index = index
         img_path = self.image_paths[index]
 
-        image = QImage(str(img_path))
-        if image.isNull():
-            QMessageBox.warning(self, "圖片讀取失敗", str(img_path))
+        try:
+            pixmap, w, h = load_image(img_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "圖片讀取失敗", f"{img_path.name}\n{exc}")
             return
 
-        self.current_image_width = image.width()
-        self.current_image_height = image.height()
-        self.image_size_cache[img_path.name] = (self.current_image_width, self.current_image_height)
+        self.current_image_width = w
+        self.current_image_height = h
+        self.image_size_cache[img_path.name] = (w, h)
 
         self.scene.clear()
-        self.pixmap_item = self.scene.addPixmap(QPixmap.fromImage(image))
+        self.pixmap_item = self.scene.addPixmap(pixmap)
         self.pixmap_item.setZValue(-10)
         self.scene.setSceneRect(QRectF(0, 0, self.current_image_width, self.current_image_height))
         self.image_loaded = True
