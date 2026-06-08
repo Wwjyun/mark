@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 
 from PySide6.QtCore import Qt, QRectF, QPointF
-from PySide6.QtGui import QAction, QBrush, QColor, QImage, QPainter, QPen, QPixmap
+from PySide6.QtGui import QAction, QBrush, QColor, QPainter, QPen
 from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
@@ -29,6 +29,9 @@ from PySide6.QtWidgets import (
     QWidget,
     QInputDialog,
 )
+
+from coco_io import _read_image_size
+from image_loader import load_image
 
 IMAGE_EXTS = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
 
@@ -308,14 +311,14 @@ class YOLOXCOCOAnnotator(QMainWindow):
         self.current_index = index
         image_path = self.image_paths[index]
 
-        image = QImage(str(image_path))
-        if image.isNull():
-            QMessageBox.warning(self, "圖片讀取失敗", str(image_path))
+        try:
+            pixmap, width, height = load_image(image_path)
+        except Exception as exc:
+            QMessageBox.warning(self, "圖片讀取失敗", f"{image_path.name}\n{exc}")
             return
 
-        self.current_image_width = image.width()
-        self.current_image_height = image.height()
-        pixmap = QPixmap.fromImage(image)
+        self.current_image_width = width
+        self.current_image_height = height
         self.scene.clear()
         self.pixmap_item = self.scene.addPixmap(pixmap)
         self.pixmap_item.setZValue(-10)
@@ -469,9 +472,7 @@ class YOLOXCOCOAnnotator(QMainWindow):
         image_id_by_name = {}
 
         for idx, img_path in enumerate(self.image_paths, start=1):
-            image = QImage(str(img_path))
-            width = image.width()
-            height = image.height()
+            width, height = _read_image_size(img_path)
             image_id_by_name[img_path.name] = idx
             images.append({
                 "id": idx,

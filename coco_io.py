@@ -5,6 +5,8 @@ from typing import Callable, Dict, List, Optional, Tuple
 
 from PIL import Image, ImageOps
 
+Image.MAX_IMAGE_PIXELS = None
+
 
 def _read_image_size(image_path: Path) -> Tuple[int, int]:
     with Image.open(BytesIO(image_path.read_bytes())) as img:
