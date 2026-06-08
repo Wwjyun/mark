@@ -1,13 +1,15 @@
 import json
+from io import BytesIO
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Tuple
 
-from PySide6.QtGui import QImage
+from PIL import Image, ImageOps
 
 
 def _read_image_size(image_path: Path) -> Tuple[int, int]:
-    img = QImage(str(image_path))
-    return img.width(), img.height()
+    with Image.open(BytesIO(image_path.read_bytes())) as img:
+        img = ImageOps.exif_transpose(img)
+        return img.width, img.height
 
 
 def export_coco(

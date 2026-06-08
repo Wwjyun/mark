@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Tuple
+from io import BytesIO
 
 import cv2
 import numpy as np
@@ -21,8 +22,13 @@ def load_image(path: Path) -> Tuple[QPixmap, int, int]:
         height  – 原始像素高
     """
     # --- 1. PIL 讀取 ---
-    pil = Image.open(str(path))
-    pil = ImageOps.exif_transpose(pil)   # 修正手機/相機 EXIF 旋轉
+    # 先用 pathlib 讀成 bytes，避免 Windows 中文路徑或打包後路徑編碼造成讀取失敗。
+    try:
+        with Image.open(BytesIO(path.read_bytes())) as img:
+            pil = ImageOps.exif_transpose(img)   # 修正手機/相機 EXIF 旋轉
+            pil.load()
+    except Exception as exc:
+        raise RuntimeError(f"無法讀取圖片：{path}\n{exc}") from exc
 
     # 統一轉成 uint8 RGB
     mode = pil.mode
